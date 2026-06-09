@@ -427,7 +427,7 @@ export default function App() {
   }
 
   function exportCSV() {
-    const d = new Date(); d.setMonth(d.getMonth() - 3);
+    const d = new Date(); d.setFullYear(d.getFullYear() - 1);
     const cutoff = toDateStr(d);
     const rows = txns
       .filter(t => t.date >= cutoff)
