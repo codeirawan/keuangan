@@ -362,13 +362,13 @@ export default function App() {
 
   const visibleFiltered = filtered.slice(0, historyCount);
 
-  const expBreakdown = EXPENSE_CATS
-    .map(c => ({ ...c, total: txns.filter(t=>t.type==="expense"&&t.catId===c.id).reduce((s,t)=>s+t.amount,0) }))
-    .filter(c => c.total > 0).sort((a,b) => b.total - a.total);
-
   // Period summary
   const period = sumMode === "week" ? getWeekRange(sumOffset) : getMonthRange(sumOffset);
   const periodTxns = txns.filter(t => inRange(t.date, period.start, period.end));
+
+  const expBreakdown = EXPENSE_CATS
+    .map(c => ({ ...c, total: periodTxns.filter(t=>t.type==="expense"&&t.catId===c.id).reduce((s,t)=>s+t.amount,0) }))
+    .filter(c => c.total > 0).sort((a,b) => b.total - a.total);
   const pIncome  = periodTxns.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
   const pExpense = periodTxns.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
   const pBalance = pIncome - pExpense;
