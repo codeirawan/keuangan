@@ -377,8 +377,8 @@ export default function App() {
           {/* Header */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"24px 0 20px" }}>
             <div>
-              <div style={{ fontSize:10, fontWeight:700, letterSpacing:3, color:C.muted, textTransform:"uppercase", marginBottom:4 }}>Catatan</div>
-              <h1 style={{ fontSize:30, fontWeight:900, lineHeight:1, background:accentG, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Keuangan</h1>
+              <div style={{ fontSize:10, fontWeight:700, letterSpacing:3, color:C.muted, textTransform:"uppercase", marginBottom:4 }}>Dompet</div>
+              <h1 style={{ fontSize:30, fontWeight:900, lineHeight:1, background:accentG, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Sisa Uang</h1>
             </div>
             <button onClick={() => setDark(!dm)} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"7px 14px", display:"flex", alignItems:"center", gap:7, color:C.muted, fontSize:12, fontWeight:600 }}>
               {dm?"🌙":"☀️"} {dm?"Gelap":"Terang"}
@@ -690,7 +690,9 @@ export default function App() {
       {ready && (
         <nav className="nav">
           <button className="nav-item" onClick={() => setTab("dashboard")} style={{ color:tab==="dashboard"?accent:C.dim }}>
-            <span style={{ fontSize:22 }}>◈</span><span>Ringkasan</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>
+              </svg><span>Ringkasan</span>
           </button>
           <button className={`fab${tab==="add"?" active-tab":""}`} onClick={() => setTab("add")}>
             <span style={{ fontSize:tab==="add"?20:28, transition:"font-size .2s" }}>{tab==="add"?"✕":"+"}</span>
