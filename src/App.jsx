@@ -464,7 +464,7 @@ export default function App() {
               {user ? (
                 <button onClick={() => logoutUser()} title="Logout" style={{ width:36, height:36, borderRadius:"50%", border:`2px solid ${C.border}`, overflow:"hidden", padding:0, cursor:"pointer", background:C.surface, flexShrink:0 }}>
                   {user.photoURL
-                    ? <img src={user.photoURL} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                    ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                     : <span style={{ fontSize:16 }}>👤</span>}
                 </button>
               ) : (
