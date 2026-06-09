@@ -220,6 +220,7 @@ export default function App() {
   const [pullY, setPullY]       = useState(0);
   const [pulling, setPulling]   = useState(false);
   const [swUpdate, setSwUpdate] = useState(false);
+  const [showQris, setShowQris] = useState(false);
   const touchStartY             = useRef(0);
 
   // summary
@@ -617,6 +618,7 @@ export default function App() {
         .date-group-label::after { content:''; flex:1; height:1px; background:${C.border}; }
 
         @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes bounce { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-8px) rotate(3deg)} }
       `}</style>
 
       <div className="orb-a" /><div className="orb-b" />
@@ -656,6 +658,9 @@ export default function App() {
               <h1 style={{ fontSize:30, fontWeight:900, lineHeight:1.2, background:accentG, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Sisa Uang</h1>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <button onClick={() => setShowQris(true)} title="Support Developer" style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"6px 12px", display:"flex", alignItems:"center", color:C.muted, fontSize:16 }}>
+                ☕
+              </button>
               <button onClick={() => setDark(!dm)} title={dm?"Mode Terang":"Mode Gelap"} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"6px 12px", display:"flex", alignItems:"center", color:C.muted, fontSize:16 }}>
                 {dm ? "☀️" : "🌙"}
               </button>
@@ -1038,6 +1043,21 @@ export default function App() {
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* QRIS Modal */}
+      {showQris && (
+        <div onClick={() => setShowQris(false)} style={{ position:"fixed", inset:0, zIndex:950, background:"rgba(0,0,0,.6)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:dm?"#1e1b2e":"#fff", borderRadius:28, padding:"28px 24px 24px", maxWidth:340, width:"100%", textAlign:"center", position:"relative", boxShadow:"0 24px 64px rgba(0,0,0,.35)" }}>
+            <button onClick={() => setShowQris(false)} style={{ position:"absolute", top:14, right:14, width:30, height:30, borderRadius:"50%", border:"none", background:dm?"rgba(255,255,255,.1)":"#f0f0f0", color:dm?"#fff":"#555", fontSize:14, fontWeight:800, cursor:"pointer" }}>✕</button>
+            <div style={{ fontSize:44, marginBottom:6, display:"block", animation:"bounce 1.5s ease-in-out infinite" }}>☕</div>
+            <div style={{ fontSize:18, fontWeight:800, color:C.text, marginBottom:4 }}>Dukung Developer</div>
+            <div style={{ fontSize:13, color:C.muted, marginBottom:16 }}>Scan QRIS untuk support ya! 🙏</div>
+            <img src="/qris.jpeg" alt="QRIS @codeirawan" style={{ width:"100%", maxWidth:260, borderRadius:16, boxShadow:"0 8px 24px rgba(0,0,0,.15)", display:"block", margin:"0 auto 12px" }} />
+            <div style={{ fontSize:11, fontWeight:800, color:C.muted, letterSpacing:.5, marginBottom:6 }}>@CODEIRAWAN, KOMPUTER &amp; SOFTWARE</div>
+            <div style={{ fontSize:15, fontWeight:800, color:"#FF6B6B" }}>Terima kasih banyak! ❤️</div>
+          </div>
         </div>
       )}
 
