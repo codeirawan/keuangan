@@ -3,12 +3,12 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey:            "FILL_IN",
-  authDomain:        "FILL_IN",
-  projectId:         "FILL_IN",
-  storageBucket:     "FILL_IN",
-  messagingSenderId: "FILL_IN",
-  appId:             "FILL_IN",
+  apiKey:            "AIzaSyCtk2xdAX5W98pGAgHnZ12d2ZdVEHQZUAQ",
+  authDomain:        "sisauang.firebaseapp.com",
+  projectId:         "sisauang",
+  storageBucket:     "sisauang.firebasestorage.app",
+  messagingSenderId: "371688435932",
+  appId:             "1:371688435932:web:fed6bc5b0d7353d4f7c419",
 };
 
 const app = initializeApp(firebaseConfig);
