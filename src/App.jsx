@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { auth, db, loginGoogle, logoutUser, onAuthStateChanged } from "./firebase";
+import { collection, doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -154,10 +156,50 @@ function useStorage(key, fallback) {
   return [val, save, ready];
 }
 
+// ─── Login Screen ─────────────────────────────────────────────────────────────
+
+function LoginScreen({ dm }) {
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  async function handleLogin() {
+    setLoading(true); setErr("");
+    try { await loginGoogle(); } catch (e) { setErr("Login gagal. Coba lagi."); setLoading(false); }
+  }
+  const bg = dm
+    ? "linear-gradient(160deg,#0D0B1E 0%,#12102A 50%,#0D1520 100%)"
+    : "linear-gradient(160deg,#EDE9FE 0%,#EEF2FF 50%,#E0F2FE 100%)";
+  const cardBg  = dm ? "rgba(255,255,255,.06)" : "rgba(255,255,255,.85)";
+  const border  = dm ? "rgba(255,255,255,.10)" : "rgba(0,0,0,.08)";
+  const textCol = dm ? "#F1F5F9" : "#1E1B4B";
+  const subCol  = dm ? "rgba(255,255,255,.45)" : "rgba(0,0,0,.45)";
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:bg, fontFamily:"'Inter',system-ui,sans-serif" }}>
+      <div style={{ textAlign:"center", padding:"40px 32px", background:cardBg, borderRadius:28, border:`1px solid ${border}`, backdropFilter:"blur(20px)", maxWidth:320, width:"90%" }}>
+        <div style={{ fontSize:52, marginBottom:16 }}>💰</div>
+        <h1 style={{ fontSize:28, fontWeight:900, lineHeight:1, background:"linear-gradient(135deg,#7C3AED,#2DD4BF)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", marginBottom:8 }}>Sisa Uang</h1>
+        <p style={{ color:subCol, fontSize:13, marginBottom:28, lineHeight:1.5 }}>Login untuk sync data<br/>di semua perangkat kamu</p>
+        <button onClick={handleLogin} disabled={loading} style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"center", width:"100%", padding:"13px 20px", borderRadius:14, border:`1px solid ${border}`, background:dm?"rgba(255,255,255,.10)":"#fff", color:textCol, fontSize:14, fontWeight:600, cursor:loading?"wait":"pointer", transition:"opacity .2s", opacity:loading?.6:1 }}>
+          <svg width="18" height="18" viewBox="0 0 18 18">
+            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/>
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+            <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+          </svg>
+          {loading ? "Menghubungkan..." : "Login dengan Google"}
+        </button>
+        {err && <p style={{ marginTop:12, color:"#F87171", fontSize:12 }}>{err}</p>}
+      </div>
+    </div>
+  );
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [txns, setTxns, txnsReady] = useStorage("keuangan-txns-v1", SAMPLE);
+  const [user, setUser]           = useState(null);
+  const [authLoading, setAuthLoad] = useState(true);
+  const [txns, setTxns]           = useState([]);
+  const [txnsReady, setTxnsReady]  = useState(false);
   const [dark, setDark, darkReady] = useStorage("keuangan-dark-v1", true);
 
   const [tab, setTab]       = useState("dashboard");
@@ -178,8 +220,27 @@ export default function App() {
   const [formErr, setFormErr] = useState("");
   const amountRef = useRef(null);
 
+  useEffect(() => {
+    return onAuthStateChanged(auth, u => {
+      setUser(u);
+      setAuthLoad(false);
+      if (!u) { setTxns([]); setTxnsReady(false); }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = onSnapshot(collection(db, "users", user.uid, "txns"), snap => {
+      const data = snap.docs.map(d => d.data());
+      data.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+      setTxns(data);
+      setTxnsReady(true);
+    });
+    return unsub;
+  }, [user]);
+
   const dm    = dark;
-  const ready = txnsReady && darkReady;
+  const ready = darkReady && txnsReady;
 
   const totalIncome  = txns.filter(t => t.type==="income").reduce((s,t) => s+t.amount, 0);
   const totalExpense = txns.filter(t => t.type==="expense").reduce((s,t) => s+t.amount, 0);
@@ -205,19 +266,23 @@ export default function App() {
   const weekRows = sumMode === "month" ? buildWeekRows(txns, period) : [];
   const maxBarVal = Math.max(...(sumMode==="week" ? dayBars.map(d=>d.expense) : weekRows.map(w=>w.expense)), 1);
 
-  function addTxn() {
+  async function addTxn() {
     const n = parseFloat(amount.replace(/\./g,"").replace(",","."));
     if (!n || n <= 0) { setFormErr("Nominal tidak valid"); return; }
     if (!desc.trim())  { setFormErr("Keterangan wajib diisi"); return; }
     setFormErr("");
-    setTxns(prev => [{ id: Date.now(), type, catId, desc: desc.trim(), amount: n, date }, ...prev]);
+    const txn = { id: Date.now(), type, catId, desc: desc.trim(), amount: n, date };
+    await setDoc(doc(db, "users", user.uid, "txns", String(txn.id)), txn);
     setAmount(""); setDesc(""); setDate(todayStr());
     setSuc(true); setTimeout(() => setSuc(false), 2200);
   }
 
   function deleteTxn(id) {
     setDel(id);
-    setTimeout(() => { setTxns(prev => prev.filter(t=>t.id!==id)); setDel(null); }, 350);
+    setTimeout(async () => {
+      await deleteDoc(doc(db, "users", user.uid, "txns", String(id)));
+      setDel(null);
+    }, 350);
   }
 
   // ─── Theme ──────────────────────────────────────────────────────────────────
@@ -258,6 +323,14 @@ export default function App() {
     : "linear-gradient(135deg, #F87171, #DC2626)";
 
   // ─── Render ─────────────────────────────────────────────────────────────────
+  if (authLoading) return (
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background: dm?"linear-gradient(160deg,#0D0B1E 0%,#12102A 50%,#0D1520 100%)":"linear-gradient(160deg,#EDE9FE 0%,#EEF2FF 50%,#E0F2FE 100%)" }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={{ width:36,height:36,borderRadius:"50%",border:"3px solid rgba(124,58,237,.2)",borderTopColor:"#7C3AED",animation:"spin .8s linear infinite" }} />
+    </div>
+  );
+  if (!user) return <LoginScreen dm={dm} />;
+
   return (
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Inter',system-ui,sans-serif", paddingBottom:84 }}>
       <style>{`
@@ -380,9 +453,16 @@ export default function App() {
               <div style={{ fontSize:10, fontWeight:700, letterSpacing:3, color:C.muted, textTransform:"uppercase", marginBottom:4 }}>Dompet</div>
               <h1 style={{ fontSize:30, fontWeight:900, lineHeight:1, background:accentG, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Sisa Uang</h1>
             </div>
-            <button onClick={() => setDark(!dm)} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"7px 14px", display:"flex", alignItems:"center", gap:7, color:C.muted, fontSize:12, fontWeight:600 }}>
-              {dm?"🌙":"☀️"} {dm?"Gelap":"Terang"}
-            </button>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <button onClick={() => setDark(!dm)} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"6px 12px", display:"flex", alignItems:"center", gap:6, color:C.muted, fontSize:12, fontWeight:600 }}>
+                {dm?"🌙":"☀️"}
+              </button>
+              <button onClick={() => logoutUser()} title="Logout" style={{ width:36, height:36, borderRadius:"50%", border:`2px solid ${C.border}`, overflow:"hidden", padding:0, cursor:"pointer", background:C.surface, flexShrink:0 }}>
+                {user.photoURL
+                  ? <img src={user.photoURL} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                  : <span style={{ fontSize:16 }}>👤</span>}
+              </button>
+            </div>
           </div>
 
           {/* ══════════════════════════════════════════════════════════
