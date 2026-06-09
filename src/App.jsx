@@ -100,7 +100,7 @@ function buildDayBars(txns, range) {
     const ds = d.toISOString().slice(0,10);
     const dayTxns = txns.filter(t => t.date === ds);
     days.push({
-      label: d.toLocaleDateString("id-ID", { weekday:"short" }).slice(0,2),
+      label: d.toLocaleDateString("id-ID", { weekday:"short" }).slice(0,3),
       date: ds,
       expense: dayTxns.filter(t => t.type==="expense").reduce((s,t)=>s+t.amount,0),
       income:  dayTxns.filter(t => t.type==="income").reduce((s,t)=>s+t.amount,0),
@@ -447,15 +447,22 @@ export default function App() {
                 {sumMode === "week" && (
                   <>
                     <div style={{ fontSize:11, fontWeight:700, letterSpacing:1, color:C.muted, textTransform:"uppercase", marginBottom:12 }}>Pengeluaran Harian</div>
-                    <div style={{ display:"flex", alignItems:"flex-end", gap:6, height:70 }}>
+                    <div style={{ display:"flex", gap:6 }}>
                       {dayBars.map((d, i) => {
-                        const h = maxBarVal > 0 ? Math.max(4, Math.round((d.expense / maxBarVal) * 60)) : 4;
+                        const BAR_H = 60;
+                        const h = maxBarVal > 0 ? Math.max(4, Math.round((d.expense / maxBarVal) * BAR_H)) : 4;
                         const isToday = d.date === todayStr();
                         return (
                           <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                            <div style={{ fontSize:9, fontWeight:700, color: d.expense>0?C.text:C.dim }}>{d.expense>0?fmtShort(d.expense):""}</div>
-                            <div style={{ width:"100%", borderRadius:6, overflow:"hidden", height:60, display:"flex", alignItems:"flex-end", background:dm?"rgba(255,255,255,.04)":"rgba(0,0,0,.04)" }}>
-                              <div className="bar-fill2" style={{ width:"100%", height:`${(d.expense/maxBarVal*60)||0}px`, background: isToday ? accentG : "#7C3AED66", borderRadius:6, transition:"height .6s" }} />
+                            {/* fixed-height slot so label doesn't overlap bar */}
+                            <div style={{ height:16, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                              <span style={{ fontSize:8, fontWeight:700, color: d.expense>0?C.text:C.dim, whiteSpace:"nowrap" }}>
+                                {d.expense>0 ? fmtShort(d.expense) : ""}
+                              </span>
+                            </div>
+                            {/* bar container — fixed height, bar grows from bottom */}
+                            <div style={{ width:"100%", height:BAR_H, borderRadius:6, overflow:"hidden", display:"flex", alignItems:"flex-end", background:dm?"rgba(255,255,255,.05)":"rgba(0,0,0,.05)" }}>
+                              <div className="bar-fill2" style={{ width:"100%", height:h, background: isToday ? accentG : "#7C3AED66", borderRadius:6 }} />
                             </div>
                             <div style={{ fontSize:9, fontWeight:700, color: isToday ? accent : C.dim }}>{d.label}</div>
                           </div>
