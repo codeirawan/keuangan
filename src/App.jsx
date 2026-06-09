@@ -46,7 +46,7 @@ const SAMPLE = [
 function fmt(n)      { return "Rp " + n.toLocaleString("id-ID"); }
 function fmtShort(n) {
   if (n >= 1_000_000) return "Rp " + (n / 1_000_000).toFixed(1).replace(".0","") + "jt";
-  if (n >= 1_000)     return "Rp " + (n / 1_000).toFixed(0) + "rb";
+  if (n >= 1_000)     return "Rp " + (n / 1_000).toFixed(1).replace(".0","") + "rb";
   return "Rp " + n;
 }
 function fmtDate(str) {
@@ -849,7 +849,7 @@ function TxnRow({ t, C, deleting, onDelete, onEdit }) {
       </div>
       <div style={{ textAlign:"right", flexShrink:0 }}>
         <div style={{ fontSize:15, fontWeight:800, color:t.type==="income"?"#34D399":"#F87171" }}>
-          {t.type==="income"?"+":"-"}{fmtShort(t.amount)}
+          {t.type==="income"?"+":"-"}{fmt(t.amount)}
         </div>
       </div>
       <button onClick={() => onEdit(t)} style={{ width:28, height:28, borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
