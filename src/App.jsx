@@ -287,8 +287,9 @@ export default function App() {
 
   async function addTxn() {
     const n = parseFloat(amount.replace(/\./g,"").replace(",","."));
-    if (!n || n <= 0) { setFormErr("Nominal tidak valid"); return; }
-    if (!desc.trim())  { setFormErr("Keterangan wajib diisi"); return; }
+    if (!n || n <= 0)        { setFormErr("Nominal tidak valid"); return; }
+    if (n > 999_999_999_999) { setFormErr("Nominal maksimal Rp 999.999.999.999"); return; }
+    if (!desc.trim())        { setFormErr("Keterangan wajib diisi"); return; }
     setFormErr("");
     const txn = { id: editingId || Date.now(), type, catId, desc: desc.trim(), amount: n, date };
     if (user) {
@@ -693,9 +694,9 @@ export default function App() {
               <div style={{ position:"relative", marginBottom:10 }}>
                 <span style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", fontSize:14, fontWeight:700, color:C.muted }}>Rp</span>
                 <input ref={amountRef} className="input-field" value={amount}
-                  onChange={e => { setAmount(e.target.value.replace(/[^0-9]/g,"")); setFormErr(""); }}
+                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g,""); if (v.length <= 12) { setAmount(v); setFormErr(""); } }}
                   onKeyDown={e => e.key==="Enter" && e.target.blur()}
-                  placeholder="0" inputMode="numeric"
+                  placeholder="0" inputMode="numeric" maxLength={12}
                   style={{ paddingLeft:44, fontSize:20, fontWeight:700 }} />
               </div>
               <div style={{ display:"flex", gap:6, marginBottom:20, flexWrap:"wrap" }}>
