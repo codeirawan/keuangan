@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { auth, db, loginGoogle, logoutUser, onAuthStateChanged, configValid } from "./firebase";
-import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, limit, writeBatch, where } from "firebase/firestore";
+import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, limit, writeBatch, where, getDocs } from "firebase/firestore";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -254,11 +254,11 @@ export default function App() {
     const q = query(
       collection(db, "users", user.uid, "txns"),
       orderBy("date", "desc"),
-      orderBy("id", "desc"),
       limit(200)
     );
     const unsub = onSnapshot(q, snap => {
       const data = snap.docs.map(d => d.data());
+      data.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
       setCloudTxns(data);
       setCloudReady(true);
     });
@@ -282,12 +282,12 @@ export default function App() {
     const d = new Date(); d.setFullYear(d.getFullYear() - 1);
     const cutoff = toDateStr(d);
     const q = query(collection(db, "users", user.uid, "txns"), where("date", "<", cutoff), limit(100));
-    onSnapshot(q, snap => {
+    getDocs(q).then(snap => {
       if (snap.empty) return;
       const batch = writeBatch(db);
       snap.docs.forEach(d => batch.delete(d.ref));
       batch.commit();
-    }, { once: true });
+    });
   }, [user?.uid, cloudReady]);
 
   // Auto-migrate local → cloud saat pertama login dan cloud masih kosong
