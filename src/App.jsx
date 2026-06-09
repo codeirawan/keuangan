@@ -383,7 +383,7 @@ export default function App() {
         .type-toggle { display:flex; border-radius:12px; overflow:hidden; border:1px solid ${C.border}; }
         .type-btn { flex:1; padding:11px; border:none; font-size:13px; font-weight:600; transition:background .2s,color .2s; }
 
-        .nav { position:fixed; bottom:0; left:0; right:0; z-index:100;
+        .nav { position:fixed; bottom:0; left:50%; right:auto; transform:translateX(-50%); max-width:480px; width:100%; z-index:100;
           background:${C.navBg}; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
           border-top:1px solid ${C.border};
           display:flex; justify-content:space-around; align-items:center;
