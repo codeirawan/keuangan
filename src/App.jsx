@@ -355,7 +355,9 @@ export default function App() {
 
   const cats = type === "income" ? INCOME_CATS : EXPENSE_CATS;
 
+  const sixMonthsAgo = (() => { const d = new Date(); d.setMonth(d.getMonth() - 6); return toDateStr(d); })();
   const filtered = txns
+    .filter(t => t.date >= sixMonthsAgo)
     .filter(t => filterType === "all" || t.type === filterType)
     .filter(t => !search || t.desc.toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => b.date.localeCompare(a.date));
