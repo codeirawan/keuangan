@@ -206,10 +206,14 @@ export default function App() {
   const [cloudReady, setCloudReady]           = useState(false);
   const [dark, setDark, darkReady]            = useStorage("keuangan-dark-v1", true);
 
-  const [tab, setTab]       = useState("dashboard");
-  const [filterType, setFT] = useState("all");
-  const [deletingId, setDel] = useState(null);
+  const [budgets, setBudgets, ]               = useStorage("keuangan-budgets-v1", {});
+
+  const [tab, setTab]         = useState("dashboard");
+  const [filterType, setFT]   = useState("all");
+  const [deletingId, setDel]  = useState(null);
   const [showSuccess, setSuc] = useState(false);
+  const [search, setSearch]   = useState("");
+  const [editBudget, setEB]   = useState(false);
 
   // summary
   const [sumMode, setSumMode]     = useState("week");   // week | month
@@ -257,6 +261,7 @@ export default function App() {
 
   const filtered = txns
     .filter(t => filterType === "all" || t.type === filterType)
+    .filter(t => !search || t.desc.toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => b.date.localeCompare(a.date));
 
   const expBreakdown = EXPENSE_CATS
@@ -315,6 +320,17 @@ export default function App() {
       }
       setDel(null);
     }, 350);
+  }
+
+  function exportCSV() {
+    const rows = txns.slice().sort((a,b) => b.date.localeCompare(a.date)).map(t => {
+      const cat = ALL_CATS.find(c => c.id === t.catId);
+      return [t.date, t.type==="income"?"Pemasukan":"Pengeluaran", cat?.label||t.catId, `"${t.desc.replace(/"/g,'""')}"`, t.amount].join(",");
+    });
+    const csv = ["Tanggal,Tipe,Kategori,Keterangan,Nominal", ...rows].join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8;" }));
+    const a = document.createElement("a"); a.href=url; a.download=`sisa-uang-${todayStr()}.csv`; a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ─── Theme ──────────────────────────────────────────────────────────────────
@@ -632,25 +648,41 @@ export default function App() {
               {/* Spending breakdown */}
               {expBreakdown.length > 0 && (
                 <div className="card-solid" style={{ padding:"20px" }}>
-                  <div style={{ fontSize:12, fontWeight:700, letterSpacing:1, color:C.muted, textTransform:"uppercase", marginBottom:16 }}>Pengeluaran per Kategori</div>
-                  <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+                    <div style={{ fontSize:12, fontWeight:700, letterSpacing:1, color:C.muted, textTransform:"uppercase" }}>Pengeluaran per Kategori</div>
+                    <button onClick={()=>setEB(v=>!v)} style={{ fontSize:11, fontWeight:600, color:accent, background:"rgba(124,58,237,.10)", border:"none", padding:"3px 10px", borderRadius:50 }}>{editBudget?"Selesai":"Atur Budget"}</button>
+                  </div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
                     {expBreakdown.slice(0,5).map(c => {
-                      const pct = totalExpense>0 ? Math.round((c.total/totalExpense)*100) : 0;
+                      const budget  = budgets[c.id] || 0;
+                      const pct     = totalExpense>0 ? Math.round((c.total/totalExpense)*100) : 0;
+                      const bPct    = budget>0 ? Math.min(Math.round((c.total/budget)*100),100) : 0;
+                      const overBudget = budget>0 && c.total>budget;
                       return (
                         <div key={c.id}>
                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
                             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                               <span style={{ fontSize:16 }}>{c.icon}</span>
                               <span style={{ fontSize:13, fontWeight:600, color:C.text }}>{c.label}</span>
+                              {overBudget && <span style={{ fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:50, background:"rgba(248,113,113,.15)", color:"#F87171" }}>OVER</span>}
                             </div>
-                            <div>
-                              <span style={{ fontSize:13, fontWeight:700, color:C.text }}>{fmtShort(c.total)}</span>
-                              <span style={{ fontSize:10, color:C.dim, marginLeft:6 }}>{pct}%</span>
+                            <div style={{ textAlign:"right" }}>
+                              <span style={{ fontSize:13, fontWeight:700, color:overBudget?"#F87171":C.text }}>{fmtShort(c.total)}</span>
+                              {budget>0 && <span style={{ fontSize:10, color:C.dim, marginLeft:4 }}>/ {fmtShort(budget)}</span>}
+                              {!budget && <span style={{ fontSize:10, color:C.dim, marginLeft:6 }}>{pct}%</span>}
                             </div>
                           </div>
-                          <div className="progress-bg">
-                            <div className="bar-fill" style={{ height:"100%", width:`${pct}%`, background:c.color, borderRadius:6 }} />
-                          </div>
+                          {editBudget ? (
+                            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                              <span style={{ fontSize:11, color:C.muted, flexShrink:0 }}>Budget:</span>
+                              <input type="number" value={budgets[c.id]||""} onChange={e=>setBudgets(prev=>({...prev,[c.id]:Number(e.target.value)||0}))}
+                                placeholder="0" style={{ flex:1, padding:"5px 10px", borderRadius:8, border:`1px solid ${C.border}`, background:C.input, color:C.text, fontSize:12, outline:"none" }} />
+                            </div>
+                          ) : (
+                            <div className="progress-bg">
+                              <div style={{ height:"100%", width:`${budget>0?bPct:pct}%`, background:overBudget?"#F87171":c.color, borderRadius:6, transition:"width .4s" }} />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -755,6 +787,18 @@ export default function App() {
           ══════════════════════════════════════════════════════════ */}
           {tab === "history" && (
             <div>
+              {/* Search + Export */}
+              <div style={{ display:"flex", gap:8, marginBottom:14, alignItems:"center" }}>
+                <div style={{ flex:1, position:"relative" }}>
+                  <svg style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari transaksi..." style={{ width:"100%", padding:"9px 12px 9px 34px", borderRadius:12, border:`1px solid ${C.border}`, background:C.input, color:C.text, fontSize:13, outline:"none", boxSizing:"border-box" }} />
+                </div>
+                <button onClick={exportCSV} title="Export CSV" style={{ padding:"9px 12px", borderRadius:12, border:`1px solid ${C.border}`, background:C.input, color:C.muted, display:"flex", alignItems:"center", gap:6, fontSize:12, fontWeight:600, flexShrink:0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  CSV
+                </button>
+              </div>
+
               {/* Summary pills */}
               <div style={{ display:"flex", gap:10, marginBottom:14 }}>
                 <div style={{ flex:1, padding:"14px", borderRadius:16, background:greenG, boxShadow:"0 4px 16px rgba(5,150,105,.3)" }}>
