@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { auth, db, loginGoogle, logoutUser, onAuthStateChanged } from "./firebase";
+import { auth, db, loginGoogle, logoutUser, onAuthStateChanged, configValid } from "./firebase";
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -235,6 +235,7 @@ export default function App() {
   const amountRef = useRef(null);
 
   useEffect(() => {
+    if (!configValid) { setAuthLoad(false); return; }
     return onAuthStateChanged(auth, u => {
       setUser(u);
       setAuthLoad(false);
@@ -450,6 +451,34 @@ export default function App() {
     : "linear-gradient(135deg, #F87171, #DC2626)";
 
   // ─── Render ─────────────────────────────────────────────────────────────────
+
+  if (!configValid) return (
+    <div style={{
+      minHeight:"100dvh", display:"flex", alignItems:"center", justifyContent:"center",
+      background:"linear-gradient(135deg,#1e1b2e 0%,#12111c 100%)",
+      fontFamily:"system-ui,sans-serif", padding:24, boxSizing:"border-box",
+    }}>
+      <div style={{
+        maxWidth:420, width:"100%", background:"rgba(255,255,255,0.06)",
+        border:"1px solid rgba(255,255,255,0.12)", borderRadius:24,
+        padding:"40px 32px", textAlign:"center", backdropFilter:"blur(20px)",
+      }}>
+        <div style={{fontSize:56,marginBottom:16}}>🔧</div>
+        <h2 style={{color:"#e2e8f0",margin:"0 0 8px",fontSize:22,fontWeight:700}}>Sedang dalam pemeliharaan</h2>
+        <p style={{color:"#94a3b8",margin:"0 0 24px",fontSize:15,lineHeight:1.6}}>
+          Konfigurasi server belum tersedia.<br/>Hubungi administrator atau coba beberapa saat lagi.
+        </p>
+        <button
+          onClick={()=>window.location.reload()}
+          style={{
+            background:"linear-gradient(135deg,#7c3aed,#5b21b6)", color:"#fff",
+            border:"none", borderRadius:12, padding:"12px 28px",
+            fontSize:15, fontWeight:600, cursor:"pointer",
+          }}
+        >Coba lagi</button>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Inter',system-ui,sans-serif", paddingBottom:110 }}>

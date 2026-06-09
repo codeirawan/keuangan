@@ -11,12 +11,18 @@ const firebaseConfig = {
   appId:             import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+export const configValid = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
 
-export const auth           = getAuth(app);
-export const db             = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider();
+let auth, db, googleProvider;
 
-export const loginGoogle    = () => signInWithPopup(auth, googleProvider);
-export const logoutUser     = () => signOut(auth);
+if (configValid) {
+  const app   = initializeApp(firebaseConfig);
+  auth         = getAuth(app);
+  db           = getFirestore(app);
+  googleProvider = new GoogleAuthProvider();
+}
+
+export { auth, db, googleProvider };
+export const loginGoogle = () => signInWithPopup(auth, googleProvider);
+export const logoutUser  = () => signOut(auth);
 export { onAuthStateChanged };
