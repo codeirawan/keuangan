@@ -656,9 +656,8 @@ export default function App() {
               <h1 style={{ fontSize:30, fontWeight:900, lineHeight:1.2, background:accentG, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Sisa Uang</h1>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <button onClick={() => setDark(!dm)} title={dm?"Mode Terang":"Mode Gelap"} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"6px 14px", display:"flex", alignItems:"center", gap:6, color:C.text, fontSize:13, fontWeight:600 }}>
-                <span style={{ fontSize:15 }}>{dm ? "☀️" : "🌙"}</span>
-                <span style={{ fontSize:11, color:C.muted }}>{dm ? "Terang" : "Gelap"}</span>
+              <button onClick={() => setDark(!dm)} title={dm?"Mode Terang":"Mode Gelap"} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"6px 12px", display:"flex", alignItems:"center", color:C.muted, fontSize:16 }}>
+                {dm ? "☀️" : "🌙"}
               </button>
               {user ? (
                 <button onClick={() => logoutUser()} title="Logout" style={{ width:36, height:36, borderRadius:"50%", border:`2px solid ${C.border}`, overflow:"hidden", padding:0, cursor:"pointer", background:C.surface, flexShrink:0 }}>
