@@ -421,10 +421,15 @@ export default function App() {
   }
 
   function exportCSV() {
-    const rows = txns.slice().sort((a,b) => b.date.localeCompare(a.date)).map(t => {
-      const cat = ALL_CATS.find(c => c.id === t.catId);
-      return [t.date, t.type==="income"?"Pemasukan":"Pengeluaran", cat?.label||t.catId, `"${t.desc.replace(/"/g,'""')}"`, t.amount].join(",");
-    });
+    const d = new Date(); d.setMonth(d.getMonth() - 3);
+    const cutoff = toDateStr(d);
+    const rows = txns
+      .filter(t => t.date >= cutoff)
+      .sort((a,b) => b.date.localeCompare(a.date))
+      .map(t => {
+        const cat = ALL_CATS.find(c => c.id === t.catId);
+        return [t.date, t.type==="income"?"Pemasukan":"Pengeluaran", cat?.label||t.catId, `"${t.desc.replace(/"/g,'""')}"`, t.amount].join(",");
+      });
     const csv = ["Tanggal,Tipe,Kategori,Keterangan,Nominal", ...rows].join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8;" }));
     const a = document.createElement("a"); a.href=url; a.download=`sisa-uang-${todayStr()}.csv`; a.click();
