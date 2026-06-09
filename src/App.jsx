@@ -201,9 +201,10 @@ function LoginScreen({ dm }) {
 export default function App() {
   const [user, setUser]                       = useState(null);
   const [authLoading, setAuthLoad]            = useState(true);
-  const [localTxns, setLocalTxns, localReady] = useStorage("keuangan-txns-v1", SAMPLE);
+  const [localTxns, setLocalTxns, localReady] = useStorage("keuangan-txns-v1", []);
   const [cloudTxns, setCloudTxns]             = useState([]);
   const [cloudReady, setCloudReady]           = useState(false);
+  const [migrationDone, setMigrationDone]     = useState(false);
   const [dark, setDark, darkReady]            = useStorage("keuangan-dark-v1", true);
 
   const [localBudgets, setLocalBudgets, ]     = useStorage("keuangan-budgets-v1", {});
@@ -263,6 +264,20 @@ export default function App() {
     });
     return unsub;
   }, [user]);
+
+  // Reset migration flag saat user berganti
+  useEffect(() => { setMigrationDone(false); }, [user?.uid]);
+
+  // Auto-migrate local → cloud saat pertama login dan cloud masih kosong
+  useEffect(() => {
+    if (!user || !cloudReady || migrationDone) return;
+    setMigrationDone(true);
+    if (cloudTxns.length === 0 && localTxns.length > 0) {
+      Promise.all(localTxns.map(t =>
+        setDoc(doc(db, "users", user.uid, "txns", String(t.id)), t)
+      ));
+    }
+  }, [user, cloudReady, migrationDone]);
 
   // SW update detection
   useEffect(() => {
@@ -823,17 +838,29 @@ export default function App() {
               )}
 
               {/* Recent */}
-              <div>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-                  <span style={{ fontSize:12, fontWeight:700, letterSpacing:1, color:C.muted, textTransform:"uppercase" }}>Transaksi Terakhir</span>
-                  <button onClick={() => setTab("history")} style={{ fontSize:12, fontWeight:600, color:accent, background:"rgba(124,58,237,.10)", border:"none", padding:"4px 12px", borderRadius:50 }}>Lihat semua</button>
+              {txns.length === 0 ? (
+                <div style={{ textAlign:"center", padding:"40px 0 20px" }}>
+                  <div style={{ fontSize:52, marginBottom:14, opacity:.35 }}>💸</div>
+                  <div style={{ fontSize:16, fontWeight:700, color:C.text, marginBottom:8 }}>Belum ada transaksi</div>
+                  <div style={{ fontSize:13, color:C.muted, marginBottom:24 }}>Catat pemasukan atau pengeluaran pertamamu</div>
+                  <button
+                    onClick={() => setTab("add")}
+                    style={{ background:accentG, color:"#fff", border:"none", borderRadius:50, padding:"12px 28px", fontSize:14, fontWeight:700, cursor:"pointer" }}
+                  >+ Tambah Transaksi</button>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {txns.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(t => (
-                    <TxnRow key={t.id} t={t} C={C} deleting={deletingId===t.id} onDelete={deleteTxn} onEdit={startEdit} />
-                  ))}
+              ) : (
+                <div>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                    <span style={{ fontSize:12, fontWeight:700, letterSpacing:1, color:C.muted, textTransform:"uppercase" }}>Transaksi Terakhir</span>
+                    <button onClick={() => setTab("history")} style={{ fontSize:12, fontWeight:600, color:accent, background:"rgba(124,58,237,.10)", border:"none", padding:"4px 12px", borderRadius:50 }}>Lihat semua</button>
+                  </div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                    {txns.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(t => (
+                      <TxnRow key={t.id} t={t} C={C} deleting={deletingId===t.id} onDelete={deleteTxn} onEdit={startEdit} />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
