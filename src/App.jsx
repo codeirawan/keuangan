@@ -399,6 +399,8 @@ export default function App() {
     if (!editingId) {
       const todayCount = txns.filter(t => t.date === date).length;
       if (todayCount >= 50) { setFormErr("Maksimal 50 transaksi per hari"); return; }
+      const duplicate = txns.find(t => t.amount === n && t.desc.toLowerCase() === desc.trim().toLowerCase() && t.date === date);
+      if (duplicate) { setFormErr("Transaksi serupa sudah ada di tanggal ini"); return; }
     }
     setFormErr("");
     const txn = { id: editingId || Date.now(), type, catId, desc: desc.trim(), amount: n, date };
