@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { auth, db, loginGoogle, logoutUser, onAuthStateChanged, configValid } from "./firebase";
+import { auth, db, loginGoogle, getLoginRedirect, logoutUser, onAuthStateChanged, configValid } from "./firebase";
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -164,9 +164,9 @@ function useStorage(key, fallback) {
 function LoginScreen({ dm }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  async function handleLogin() {
+  function handleLogin() {
     setLoading(true); setErr("");
-    try { await loginGoogle(); } catch (e) { setErr("Login gagal. Coba lagi."); setLoading(false); }
+    loginGoogle().catch(() => { setErr("Login gagal. Coba lagi."); setLoading(false); });
   }
   const bg = dm
     ? "linear-gradient(160deg,#0D0B1E 0%,#12102A 50%,#0D1520 100%)"
@@ -237,6 +237,7 @@ export default function App() {
 
   useEffect(() => {
     if (!configValid) { setAuthLoad(false); return; }
+    getLoginRedirect().catch(() => {});
     return onAuthStateChanged(auth, u => {
       setUser(u);
       setAuthLoad(false);
