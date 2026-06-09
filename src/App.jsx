@@ -522,7 +522,7 @@ export default function App() {
                     {balance < 0 && <span style={{ fontSize:15, marginLeft:6, opacity:.7 }}>defisit</span>}
                   </div>
                   <div style={{ display:"flex", gap:18 }}>
-                    {[["↑ MASUK", fmtShort(totalIncome)],["↓ KELUAR", fmtShort(totalExpense)],["TRANSAKSI", txns.length]].map(([l,v]) => (
+                    {[["↑ MASUK", fmt(totalIncome)],["↓ KELUAR", fmt(totalExpense)],["TRANSAKSI", txns.length]].map(([l,v]) => (
                       <div key={l}>
                         <div style={{ fontSize:10, color:"rgba(255,255,255,.6)", fontWeight:600, letterSpacing:1, marginBottom:3 }}>{l}</div>
                         <div style={{ fontSize:15, fontWeight:700, color:"#fff" }}>{v}</div>
@@ -852,7 +852,12 @@ function TxnRow({ t, C, deleting, onDelete, onEdit }) {
           {t.type==="income"?"+":"-"}{fmtShort(t.amount)}
         </div>
       </div>
-      <button onClick={() => onEdit(t)} style={{ width:28, height:28, borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, fontSize:13, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>✏</button>
+      <button onClick={() => onEdit(t)} style={{ width:28, height:28, borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
       <button className="del" onClick={() => onDelete(t.id)} style={{ width:28, height:28, borderRadius:8, border:"1px solid rgba(248,113,113,.25)", background:"rgba(248,113,113,.10)", color:"#F87171", fontSize:15, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>×</button>
     </div>
   );
