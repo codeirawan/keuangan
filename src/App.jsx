@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { auth, db, loginGoogle, logoutUser, onAuthStateChanged } from "./firebase";
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
@@ -213,8 +213,12 @@ export default function App() {
   const [filterType, setFT]   = useState("all");
   const [deletingId, setDel]  = useState(null);
   const [showSuccess, setSuc] = useState(false);
-  const [search, setSearch]   = useState("");
-  const [editBudget, setEB]   = useState(false);
+  const [search, setSearch]     = useState("");
+  const [editBudget, setEB]     = useState(false);
+  const [pullY, setPullY]       = useState(0);
+  const [pulling, setPulling]   = useState(false);
+  const [swUpdate, setSwUpdate] = useState(false);
+  const touchStartY             = useRef(0);
 
   // summary
   const [sumMode, setSumMode]     = useState("week");   // week | month
@@ -256,6 +260,55 @@ export default function App() {
     });
     return unsub;
   }, [user]);
+
+  // SW update detection
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.ready.then(reg => {
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) setSwUpdate(true);
+        });
+      });
+    });
+  }, []);
+
+  // Pull-to-refresh
+  const doRefresh = useCallback(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.waiting?.postMessage("SKIP_WAITING");
+      });
+    }
+    window.location.reload();
+  }, []);
+
+  useEffect(() => {
+    const onTouchStart = e => {
+      if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY;
+    };
+    const onTouchMove = e => {
+      if (touchStartY.current === 0) return;
+      const dy = e.touches[0].clientY - touchStartY.current;
+      if (dy > 0 && window.scrollY === 0) {
+        setPulling(true);
+        setPullY(Math.min(dy, 80));
+      }
+    };
+    const onTouchEnd = () => {
+      if (pullY >= 60) doRefresh();
+      setPullY(0); setPulling(false); touchStartY.current = 0;
+    };
+    document.addEventListener("touchstart", onTouchStart, { passive:true });
+    document.addEventListener("touchmove",  onTouchMove,  { passive:true });
+    document.addEventListener("touchend",   onTouchEnd);
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove",  onTouchMove);
+      document.removeEventListener("touchend",   onTouchEnd);
+    };
+  }, [pullY, doRefresh]);
 
   const txns      = user ? cloudTxns : localTxns;
   const txnsReady = user ? cloudReady : localReady;
@@ -503,6 +556,26 @@ export default function App() {
       `}</style>
 
       <div className="orb-a" /><div className="orb-b" />
+
+      {/* Pull-to-refresh indicator */}
+      {pulling && (
+        <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:200, display:"flex", justifyContent:"center", pointerEvents:"none" }}>
+          <div style={{ marginTop: pullY - 40, width:36, height:36, borderRadius:"50%", background:C.surface, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 12px rgba(0,0,0,.2)", transition:"margin .05s" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={pullY>=60?"#7C3AED":C.muted} strokeWidth="2.5" strokeLinecap="round" style={{ transform:`rotate(${pullY*3}deg)` }}>
+              <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* SW update banner */}
+      {swUpdate && (
+        <div style={{ position:"fixed", top:12, left:"50%", transform:"translateX(-50%)", zIndex:300, background:"#7C3AED", color:"#fff", borderRadius:14, padding:"10px 18px", display:"flex", alignItems:"center", gap:12, boxShadow:"0 4px 20px rgba(124,58,237,.5)", fontSize:13, fontWeight:600, whiteSpace:"nowrap" }}>
+          <span>Versi baru tersedia</span>
+          <button onClick={doRefresh} style={{ background:"rgba(255,255,255,.2)", border:"none", color:"#fff", borderRadius:8, padding:"4px 12px", fontSize:12, fontWeight:700 }}>Update</button>
+        </div>
+      )}
+
       {showSuccess && <div className="success-toast">✓ Transaksi berhasil disimpan</div>}
 
       {!ready ? (

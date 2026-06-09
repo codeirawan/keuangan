@@ -1,4 +1,4 @@
-const CACHE = "sisa-uang-v1";
+const CACHE = "sisa-uang-v2";
 const SHELL = ["/", "/index.html"];
 
 self.addEventListener("install", e => {
@@ -16,7 +16,6 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
-  // Pass through Firebase/external requests
   if (!url.origin.includes(self.location.origin)) return;
   e.respondWith(
     fetch(e.request)
@@ -27,4 +26,9 @@ self.addEventListener("fetch", e => {
       })
       .catch(() => caches.match(e.request).then(r => r || caches.match("/index.html")))
   );
+});
+
+// Notify clients when a new SW is waiting
+self.addEventListener("message", e => {
+  if (e.data === "SKIP_WAITING") self.skipWaiting();
 });
