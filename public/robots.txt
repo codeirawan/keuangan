@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sisauang.vercel.app/sitemap.xml
