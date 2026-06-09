@@ -339,7 +339,7 @@ export default function App() {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Inter',system-ui,sans-serif", paddingBottom:84 }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Inter',system-ui,sans-serif", paddingBottom:110 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }
@@ -386,22 +386,26 @@ export default function App() {
         .type-toggle { display:flex; border-radius:12px; overflow:hidden; border:1px solid ${C.border}; }
         .type-btn { flex:1; padding:11px; border:none; font-size:13px; font-weight:600; transition:background .2s,color .2s; }
 
-        .nav { position:fixed; bottom:0; left:50%; right:auto; transform:translateX(-50%); max-width:480px; width:100%; z-index:100;
-          background:${C.navBg}; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-          border-top:1px solid ${C.border};
+        .nav { position:fixed; bottom:max(16px,env(safe-area-inset-bottom)); left:50%; right:auto;
+          transform:translateX(-50%); width:calc(100% - 48px); max-width:420px; z-index:100;
+          background:${dm?"rgba(18,16,42,0.72)":"rgba(255,255,255,0.65)"};
+          backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
+          border:1px solid ${dm?"rgba(255,255,255,0.10)":"rgba(255,255,255,0.85)"};
+          border-radius:28px;
+          box-shadow:${dm?"0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)":"0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)"};
           display:flex; justify-content:space-around; align-items:center;
-          padding:10px 0 max(10px,env(safe-area-inset-bottom)); }
+          padding:8px 12px; }
         .nav-item { display:flex; flex-direction:column; align-items:center; gap:3px;
-          padding:6px 16px; border-radius:12px; border:none; background:transparent;
+          padding:6px 20px; border-radius:16px; border:none; background:transparent;
           transition:background .2s; font-size:10px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
-        .nav-item:hover { background:rgba(124,58,237,.1); }
+        .nav-item:hover { background:rgba(124,58,237,.12); }
 
         .fab { background:${accentG}; box-shadow:0 4px 20px rgba(124,58,237,.5);
           border:none; border-radius:18px; width:56px; height:56px;
           display:flex; align-items:center; justify-content:center;
-          font-size:26px; color:#fff; font-weight:300; transform:translateY(-18px);
+          font-size:26px; color:#fff; font-weight:300; transform:translateY(-14px);
           transition:transform .2s,box-shadow .2s; }
-        .fab:hover { transform:translateY(-22px); box-shadow:0 8px 30px rgba(124,58,237,.6); }
+        .fab:hover { transform:translateY(-18px); box-shadow:0 8px 30px rgba(124,58,237,.6); }
 
         .btn-primary { width:100%; padding:14px; background:${accentG}; color:#fff; border:none;
           border-radius:14px; font-size:15px; font-weight:700;
