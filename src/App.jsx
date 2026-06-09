@@ -399,9 +399,9 @@ export default function App() {
         .fab { background:${accentG}; box-shadow:0 4px 20px rgba(124,58,237,.5);
           border:none; border-radius:18px; width:56px; height:56px;
           display:flex; align-items:center; justify-content:center;
-          font-size:26px; color:#fff; font-weight:300; transform:translateY(-10px);
+          font-size:26px; color:#fff; font-weight:300; transform:translateY(-18px);
           transition:transform .2s,box-shadow .2s; }
-        .fab:hover { transform:translateY(-14px); box-shadow:0 8px 30px rgba(124,58,237,.6); }
+        .fab:hover { transform:translateY(-22px); box-shadow:0 8px 30px rgba(124,58,237,.6); }
 
         .btn-primary { width:100%; padding:14px; background:${accentG}; color:#fff; border:none;
           border-radius:14px; font-size:15px; font-weight:700;
@@ -458,7 +458,7 @@ export default function App() {
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"24px 0 20px" }}>
             <div>
               <div style={{ fontSize:10, fontWeight:700, letterSpacing:3, color:C.muted, textTransform:"uppercase", marginBottom:4 }}>Dompet</div>
-              <h1 style={{ fontSize:30, fontWeight:900, lineHeight:1, background:accentG, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Sisa Uang</h1>
+              <h1 style={{ fontSize:30, fontWeight:900, lineHeight:1.2, background:accentG, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Sisa Uang</h1>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
               <button onClick={() => setDark(!dm)} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"6px 12px", display:"flex", alignItems:"center", gap:6, color:C.muted, fontSize:12, fontWeight:600 }}>
