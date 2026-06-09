@@ -222,6 +222,7 @@ export default function App() {
   const [catId, setCatId]   = useState("makanan");
   const [date, setDate]     = useState(todayStr());
   const [formErr, setFormErr] = useState("");
+  const [editingId, setEditingId] = useState(null);
   const amountRef = useRef(null);
 
   useEffect(() => {
@@ -272,18 +273,34 @@ export default function App() {
   const weekRows = sumMode === "month" ? buildWeekRows(txns, period) : [];
   const maxBarVal = Math.max(...(sumMode==="week" ? dayBars.map(d=>d.expense) : weekRows.map(w=>w.expense)), 1);
 
+  function resetForm() {
+    setAmount(""); setDesc(""); setDate(todayStr()); setType("expense"); setCatId("makanan");
+    setFormErr(""); setEditingId(null);
+  }
+
+  function startEdit(t) {
+    setEditingId(t.id);
+    setType(t.type); setCatId(t.catId);
+    setDesc(t.desc); setAmount(String(t.amount)); setDate(t.date);
+    setTab("add");
+  }
+
   async function addTxn() {
     const n = parseFloat(amount.replace(/\./g,"").replace(",","."));
     if (!n || n <= 0) { setFormErr("Nominal tidak valid"); return; }
     if (!desc.trim())  { setFormErr("Keterangan wajib diisi"); return; }
     setFormErr("");
-    const txn = { id: Date.now(), type, catId, desc: desc.trim(), amount: n, date };
+    const txn = { id: editingId || Date.now(), type, catId, desc: desc.trim(), amount: n, date };
     if (user) {
       await setDoc(doc(db, "users", user.uid, "txns", String(txn.id)), txn);
     } else {
-      setLocalTxns(prev => [txn, ...prev]);
+      if (editingId) {
+        setLocalTxns(prev => prev.map(t => t.id === editingId ? txn : t));
+      } else {
+        setLocalTxns(prev => [txn, ...prev]);
+      }
     }
-    setAmount(""); setDesc(""); setDate(todayStr());
+    resetForm(); setTab("dashboard");
     setSuc(true); setTimeout(() => setSuc(false), 2200);
   }
 
@@ -648,7 +665,7 @@ export default function App() {
                 </div>
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {txns.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(t => (
-                    <TxnRow key={t.id} t={t} C={C} deleting={deletingId===t.id} onDelete={deleteTxn} />
+                    <TxnRow key={t.id} t={t} C={C} deleting={deletingId===t.id} onDelete={deleteTxn} onEdit={startEdit} />
                   ))}
                 </div>
               </div>
@@ -660,7 +677,10 @@ export default function App() {
           ══════════════════════════════════════════════════════════ */}
           {tab === "add" && (
             <div className="card-solid" style={{ padding:"24px 22px", marginTop:4 }}>
-              <h2 style={{ fontSize:20, fontWeight:800, color:C.text, marginBottom:22 }}>Tambah Transaksi</h2>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:22 }}>
+                <h2 style={{ fontSize:20, fontWeight:800, color:C.text }}>{editingId ? "Edit Transaksi" : "Tambah Transaksi"}</h2>
+                {editingId && <button onClick={() => { resetForm(); setTab("dashboard"); }} style={{ fontSize:12, fontWeight:600, color:C.muted, background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"4px 12px" }}>Batal</button>}
+              </div>
 
               {/* Type toggle */}
               <div className="type-toggle" style={{ marginBottom:20, background:C.input }}>
@@ -725,7 +745,7 @@ export default function App() {
               {formErr && (
                 <div style={{ fontSize:12, color:"#F87171", marginBottom:12, padding:"10px 14px", background:"rgba(248,113,113,.10)", borderRadius:10, border:"1px solid rgba(248,113,113,.2)" }}>⚠ {formErr}</div>
               )}
-              <button className="btn-primary" onClick={addTxn}>Simpan Transaksi</button>
+              <button className="btn-primary" onClick={addTxn}>{editingId ? "Update Transaksi" : "Simpan Transaksi"}</button>
             </div>
           )}
 
@@ -778,7 +798,7 @@ export default function App() {
                       </div>
                       <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:4 }}>
                         {items.map(t => (
-                          <TxnRow key={t.id} t={t} C={C} deleting={deletingId===t.id} onDelete={deleteTxn} />
+                          <TxnRow key={t.id} t={t} C={C} deleting={deletingId===t.id} onDelete={deleteTxn} onEdit={startEdit} />
                         ))}
                       </div>
                     </div>
@@ -813,7 +833,7 @@ export default function App() {
 
 // ─── TxnRow ───────────────────────────────────────────────────────────────────
 
-function TxnRow({ t, C, deleting, onDelete }) {
+function TxnRow({ t, C, deleting, onDelete, onEdit }) {
   const cat = ALL_CATS.find(c => c.id === t.catId) || { icon:"✦", color:"#94A3B8", label:"Lainnya" };
   return (
     <div className={`txn-row${deleting?" removing":""}`} style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 14px" }}>
@@ -832,6 +852,7 @@ function TxnRow({ t, C, deleting, onDelete }) {
           {t.type==="income"?"+":"-"}{fmtShort(t.amount)}
         </div>
       </div>
+      <button onClick={() => onEdit(t)} style={{ width:28, height:28, borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, fontSize:13, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>✏</button>
       <button className="del" onClick={() => onDelete(t.id)} style={{ width:28, height:28, borderRadius:8, border:"1px solid rgba(248,113,113,.25)", background:"rgba(248,113,113,.10)", color:"#F87171", fontSize:15, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>×</button>
     </div>
   );
