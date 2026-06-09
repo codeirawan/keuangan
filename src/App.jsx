@@ -55,10 +55,13 @@ function fmtDate(str) {
 function fmtDateShort(str) {
   return new Date(str + "T00:00:00").toLocaleDateString("id-ID", { day:"numeric", month:"short" });
 }
-function todayStr() { return new Date().toISOString().slice(0,10); }
+function toDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function todayStr() { return toDateStr(new Date()); }
 function yesterdayStr() {
   const d = new Date(); d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0,10);
+  return toDateStr(d);
 }
 
 // Returns {start, end} as YYYY-MM-DD strings for a week (Mon–Sun) at offset weeks from now
@@ -71,9 +74,9 @@ function getWeekRange(offset = 0) {
   const sun = new Date(mon);
   sun.setDate(mon.getDate() + 6);
   return {
-    start: mon.toISOString().slice(0,10),
-    end:   sun.toISOString().slice(0,10),
-    label: `${fmtDateShort(mon.toISOString().slice(0,10))} – ${fmtDateShort(sun.toISOString().slice(0,10))}`,
+    start: toDateStr(mon),
+    end:   toDateStr(sun),
+    label: `${fmtDateShort(toDateStr(mon))} – ${fmtDateShort(toDateStr(sun))}`,
   };
 }
 
@@ -85,8 +88,8 @@ function getMonthRange(offset = 0) {
   const start = new Date(y, m, 1);
   const end   = new Date(y, m + 1, 0);
   return {
-    start: start.toISOString().slice(0,10),
-    end:   end.toISOString().slice(0,10),
+    start: toDateStr(start),
+    end:   toDateStr(end),
     label: start.toLocaleDateString("id-ID", { month:"long", year:"numeric" }),
   };
 }
@@ -99,7 +102,7 @@ function buildDayBars(txns, range) {
   for (let i = 0; i < 7; i++) {
     const d = new Date(range.start + "T00:00:00");
     d.setDate(d.getDate() + i);
-    const ds = d.toISOString().slice(0,10);
+    const ds = toDateStr(d);
     const dayTxns = txns.filter(t => t.date === ds);
     days.push({
       label: d.toLocaleDateString("id-ID", { weekday:"short" }).slice(0,3),
@@ -118,10 +121,10 @@ function buildWeekRows(txns, range) {
   const endDate = new Date(range.end + "T00:00:00");
   let weekNum = 1;
   while (cur <= endDate) {
-    const wStart = cur.toISOString().slice(0,10);
+    const wStart = toDateStr(cur);
     const wEnd = new Date(cur); wEnd.setDate(cur.getDate() + 6);
     if (wEnd > endDate) wEnd.setTime(endDate.getTime());
-    const wEndStr = wEnd.toISOString().slice(0,10);
+    const wEndStr = toDateStr(wEnd);
     const wTxns = txns.filter(t => t.date >= wStart && t.date <= wEndStr);
     rows.push({
       label: `Minggu ${weekNum}`,
