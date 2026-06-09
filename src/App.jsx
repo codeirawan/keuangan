@@ -211,6 +211,7 @@ export default function App() {
 
   const [tab, setTab]         = useState("dashboard");
   const [filterType, setFT]   = useState("all");
+  const [historyCount, setHistoryCount] = useState(20);
   const [deletingId, setDel]  = useState(null);
   const [showSuccess, setSuc] = useState(false);
   const [search, setSearch]     = useState("");
@@ -343,6 +344,8 @@ export default function App() {
     .filter(t => filterType === "all" || t.type === filterType)
     .filter(t => !search || t.desc.toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => b.date.localeCompare(a.date));
+
+  const visibleFiltered = filtered.slice(0, historyCount);
 
   const expBreakdown = EXPENSE_CATS
     .map(c => ({ ...c, total: txns.filter(t=>t.type==="expense"&&t.catId===c.id).reduce((s,t)=>s+t.amount,0) }))
@@ -919,7 +922,7 @@ export default function App() {
               <div style={{ display:"flex", gap:8, marginBottom:14, alignItems:"center" }}>
                 <div style={{ flex:1, position:"relative" }}>
                   <svg style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari transaksi..." style={{ width:"100%", padding:"9px 12px 9px 34px", borderRadius:12, border:`1px solid ${C.border}`, background:C.input, color:C.text, fontSize:13, outline:"none", boxSizing:"border-box" }} />
+                  <input value={search} onChange={e=>{ setSearch(e.target.value); setHistoryCount(20); }} placeholder="Cari transaksi..." style={{ width:"100%", padding:"9px 12px 9px 34px", borderRadius:12, border:`1px solid ${C.border}`, background:C.input, color:C.text, fontSize:13, outline:"none", boxSizing:"border-box" }} />
                 </div>
                 <button onClick={exportCSV} title="Export CSV" style={{ padding:"9px 12px", borderRadius:12, border:`1px solid ${C.border}`, background:C.input, color:C.muted, display:"flex", alignItems:"center", gap:6, fontSize:12, fontWeight:600, flexShrink:0 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -942,7 +945,7 @@ export default function App() {
               {/* Filters */}
               <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
                 {[["all","Semua"],["income","Masuk"],["expense","Keluar"]].map(([v,l]) => (
-                  <button key={v} className="chip" onClick={() => setFT(v)} style={{ padding:"6px 14px", borderRadius:50, border:"none", background:filterType===v?(v==="income"?greenG:v==="expense"?redG:accentG):(dm?"rgba(255,255,255,.07)":"rgba(0,0,0,.05)"), color:filterType===v?"#fff":C.muted, fontSize:12, fontWeight:600 }}>
+                  <button key={v} className="chip" onClick={() => { setFT(v); setHistoryCount(20); }} style={{ padding:"6px 14px", borderRadius:50, border:"none", background:filterType===v?(v==="income"?greenG:v==="expense"?redG:accentG):(dm?"rgba(255,255,255,.07)":"rgba(0,0,0,.05)"), color:filterType===v?"#fff":C.muted, fontSize:12, fontWeight:600 }}>
                     {l}
                   </button>
                 ))}
@@ -955,28 +958,42 @@ export default function App() {
                   <div style={{ fontSize:14, fontWeight:600, color:C.muted }}>Tidak ada transaksi</div>
                 </div>
               ) : (
-                groupTxnsByDate(filtered).map(([dateStr, items]) => {
-                  const isToday     = dateStr === todayStr();
-                  const isYesterday = dateStr === yesterdayStr();
-                  const dayIncome  = items.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
-                  const dayExpense = items.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
-                  return (
-                    <div key={dateStr}>
-                      <div className="date-group-label">
-                        <span>{isToday ? "Hari ini" : isYesterday ? "Kemarin" : fmtDate(dateStr)}</span>
-                        <span style={{ marginLeft:"auto", fontWeight:600, fontSize:10, letterSpacing:.5 }}>
-                          {dayIncome > 0 && <span style={{ color:"#34D399" }}>+{fmtShort(dayIncome)} </span>}
-                          {dayExpense > 0 && <span style={{ color:"#F87171" }}>-{fmtShort(dayExpense)}</span>}
-                        </span>
+                <>
+                  {groupTxnsByDate(visibleFiltered).map(([dateStr, items]) => {
+                    const isToday     = dateStr === todayStr();
+                    const isYesterday = dateStr === yesterdayStr();
+                    const dayIncome  = items.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
+                    const dayExpense = items.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
+                    return (
+                      <div key={dateStr}>
+                        <div className="date-group-label">
+                          <span>{isToday ? "Hari ini" : isYesterday ? "Kemarin" : fmtDate(dateStr)}</span>
+                          <span style={{ marginLeft:"auto", fontWeight:600, fontSize:10, letterSpacing:.5 }}>
+                            {dayIncome > 0 && <span style={{ color:"#34D399" }}>+{fmtShort(dayIncome)} </span>}
+                            {dayExpense > 0 && <span style={{ color:"#F87171" }}>-{fmtShort(dayExpense)}</span>}
+                          </span>
+                        </div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:4 }}>
+                          {items.map(t => (
+                            <TxnRow key={t.id} t={t} C={C} deleting={deletingId===t.id} onDelete={deleteTxn} onEdit={startEdit} />
+                          ))}
+                        </div>
                       </div>
-                      <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:4 }}>
-                        {items.map(t => (
-                          <TxnRow key={t.id} t={t} C={C} deleting={deletingId===t.id} onDelete={deleteTxn} onEdit={startEdit} />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                  {historyCount < filtered.length && (
+                    <button
+                      onClick={() => setHistoryCount(c => c + 20)}
+                      style={{
+                        width:"100%", padding:"12px", marginTop:8, borderRadius:14,
+                        border:`1px solid ${C.border}`, background:"transparent",
+                        color:C.muted, fontSize:13, fontWeight:600, cursor:"pointer",
+                      }}
+                    >
+                      Muat lebih ({filtered.length - historyCount} tersisa)
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}
