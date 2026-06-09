@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { auth, db, loginGoogle, logoutUser, onAuthStateChanged, configValid } from "./firebase";
-import { collection, doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, limit, writeBatch, where } from "firebase/firestore";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -237,7 +237,8 @@ export default function App() {
   const [date, setDate]     = useState(todayStr());
   const [formErr, setFormErr] = useState("");
   const [editingId, setEditingId] = useState(null);
-  const amountRef = useRef(null);
+  const amountRef    = useRef(null);
+  const budgetTimer  = useRef(null);
 
   useEffect(() => {
     if (!configValid) { setAuthLoad(false); return; }
@@ -250,9 +251,14 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    const unsub = onSnapshot(collection(db, "users", user.uid, "txns"), snap => {
+    const q = query(
+      collection(db, "users", user.uid, "txns"),
+      orderBy("date", "desc"),
+      orderBy("id", "desc"),
+      limit(200)
+    );
+    const unsub = onSnapshot(q, snap => {
       const data = snap.docs.map(d => d.data());
-      data.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
       setCloudTxns(data);
       setCloudReady(true);
     });
@@ -270,14 +276,33 @@ export default function App() {
   // Reset migration flag saat user berganti
   useEffect(() => { setMigrationDone(false); }, [user?.uid]);
 
+  // Cleanup transaksi > 1 tahun saat pertama login
+  useEffect(() => {
+    if (!user || !cloudReady) return;
+    const d = new Date(); d.setFullYear(d.getFullYear() - 1);
+    const cutoff = toDateStr(d);
+    const q = query(collection(db, "users", user.uid, "txns"), where("date", "<", cutoff), limit(100));
+    onSnapshot(q, snap => {
+      if (snap.empty) return;
+      const batch = writeBatch(db);
+      snap.docs.forEach(d => batch.delete(d.ref));
+      batch.commit();
+    }, { once: true });
+  }, [user?.uid, cloudReady]);
+
   // Auto-migrate local → cloud saat pertama login dan cloud masih kosong
   useEffect(() => {
     if (!user || !cloudReady || migrationDone) return;
     setMigrationDone(true);
     if (cloudTxns.length === 0 && localTxns.length > 0) {
-      Promise.all(localTxns.map(t =>
-        setDoc(doc(db, "users", user.uid, "txns", String(t.id)), t)
-      ));
+      const chunks = [];
+      for (let i = 0; i < localTxns.length; i += 500)
+        chunks.push(localTxns.slice(i, i + 500));
+      chunks.forEach(chunk => {
+        const batch = writeBatch(db);
+        chunk.forEach(t => batch.set(doc(db, "users", user.uid, "txns", String(t.id)), t));
+        batch.commit();
+      });
     }
   }, [user, cloudReady, migrationDone]);
 
@@ -340,10 +365,14 @@ export default function App() {
   const txnsReady = user ? cloudReady : localReady;
   const budgets   = user ? cloudBudgets : localBudgets;
 
-  async function setBudgets(updater) {
+  function setBudgets(updater) {
     const next = typeof updater === "function" ? updater(budgets) : updater;
     if (user) {
-      await setDoc(doc(db, "users", user.uid, "meta", "budgets"), next);
+      setCloudBudgets(next);
+      clearTimeout(budgetTimer.current);
+      budgetTimer.current = setTimeout(() => {
+        setDoc(doc(db, "users", user.uid, "meta", "budgets"), next);
+      }, 800);
     } else {
       setLocalBudgets(next);
     }
