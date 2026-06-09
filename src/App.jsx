@@ -656,8 +656,9 @@ export default function App() {
               <h1 style={{ fontSize:30, fontWeight:900, lineHeight:1.2, background:accentG, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>Sisa Uang</h1>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <button onClick={() => setDark(!dm)} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"6px 12px", display:"flex", alignItems:"center", gap:6, color:C.muted, fontSize:12, fontWeight:600 }}>
-                {dm?"🌙":"☀️"}
+              <button onClick={() => setDark(!dm)} title={dm?"Mode Terang":"Mode Gelap"} style={{ background:dm?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)", border:`1px solid ${C.border}`, borderRadius:50, padding:"6px 14px", display:"flex", alignItems:"center", gap:6, color:C.text, fontSize:13, fontWeight:600 }}>
+                <span style={{ fontSize:15 }}>{dm ? "☀️" : "🌙"}</span>
+                <span style={{ fontSize:11, color:C.muted }}>{dm ? "Terang" : "Gelap"}</span>
               </button>
               {user ? (
                 <button onClick={() => logoutUser()} title="Logout" style={{ width:36, height:36, borderRadius:"50%", border:`2px solid ${C.border}`, overflow:"hidden", padding:0, cursor:"pointer", background:C.surface, flexShrink:0 }}>
@@ -811,17 +812,19 @@ export default function App() {
                   </div>
                   <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
                     {expBreakdown.slice(0,5).map(c => {
-                      const budget  = budgets[c.id] || 0;
-                      const pct     = totalExpense>0 ? Math.round((c.total/totalExpense)*100) : 0;
-                      const bPct    = budget>0 ? Math.min(Math.round((c.total/budget)*100),100) : 0;
+                      const budget     = budgets[c.id] || 0;
+                      const pct        = totalExpense>0 ? Math.round((c.total/totalExpense)*100) : 0;
+                      const bPct       = budget>0 ? Math.min(Math.round((c.total/budget)*100),100) : 0;
                       const overBudget = budget>0 && c.total>budget;
+                      const nearBudget = budget>0 && !overBudget && bPct>=80;
                       return (
                         <div key={c.id}>
                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
                             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                               <span style={{ fontSize:16 }}>{c.icon}</span>
                               <span style={{ fontSize:13, fontWeight:600, color:C.text }}>{c.label}</span>
-                              {overBudget && <span style={{ fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:50, background:"rgba(248,113,113,.15)", color:"#F87171" }}>OVER</span>}
+                              {overBudget  && <span style={{ fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:50, background:"rgba(248,113,113,.15)", color:"#F87171" }}>OVER</span>}
+                              {nearBudget  && <span style={{ fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:50, background:"rgba(251,191,36,.15)", color:"#FBBF24" }}>⚠ HAMPIR</span>}
                             </div>
                             <div style={{ textAlign:"right" }}>
                               <span style={{ fontSize:13, fontWeight:700, color:overBudget?"#F87171":C.text }}>{fmtShort(c.total)}</span>
@@ -1062,6 +1065,7 @@ export default function App() {
 // ─── TxnRow ───────────────────────────────────────────────────────────────────
 
 function TxnRow({ t, C, deleting, onDelete, onEdit }) {
+  const [confirming, setConfirming] = useState(false);
   const cat = ALL_CATS.find(c => c.id === t.catId) || { icon:"✦", color:"#94A3B8", label:"Lainnya" };
   return (
     <div className={`txn-row${deleting?" removing":""}`} style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 14px" }}>
@@ -1080,13 +1084,23 @@ function TxnRow({ t, C, deleting, onDelete, onEdit }) {
           {t.type==="income"?"+":"-"}{fmt(t.amount)}
         </div>
       </div>
-      <button onClick={() => onEdit(t)} style={{ width:28, height:28, borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      </button>
-      <button className="del" onClick={() => onDelete(t.id)} style={{ width:28, height:28, borderRadius:8, border:"1px solid rgba(248,113,113,.25)", background:"rgba(248,113,113,.10)", color:"#F87171", fontSize:15, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>×</button>
+      {confirming ? (
+        <>
+          <span style={{ fontSize:11, color:C.muted, flexShrink:0 }}>Hapus?</span>
+          <button onClick={() => { onDelete(t.id); setConfirming(false); }} style={{ padding:"4px 10px", borderRadius:8, border:"none", background:"rgba(248,113,113,.15)", color:"#F87171", fontSize:12, fontWeight:700, cursor:"pointer", flexShrink:0 }}>Ya</button>
+          <button onClick={() => setConfirming(false)} style={{ padding:"4px 10px", borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, fontSize:12, fontWeight:700, cursor:"pointer", flexShrink:0 }}>Tidak</button>
+        </>
+      ) : (
+        <>
+          <button onClick={() => onEdit(t)} style={{ width:28, height:28, borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <button className="del" onClick={() => setConfirming(true)} style={{ width:28, height:28, borderRadius:8, border:"1px solid rgba(248,113,113,.25)", background:"rgba(248,113,113,.10)", color:"#F87171", fontSize:15, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>×</button>
+        </>
+      )}
     </div>
   );
 }
