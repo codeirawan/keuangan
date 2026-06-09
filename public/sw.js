@@ -1,9 +1,9 @@
-const CACHE = "sisa-uang-v2";
+const CACHE = "sisa-uang-v3";
 const SHELL = ["/", "/index.html"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
-  self.skipWaiting();
+  // Tidak skipWaiting — biar masuk waiting state dulu
 });
 
 self.addEventListener("activate", e => {
@@ -28,7 +28,7 @@ self.addEventListener("fetch", e => {
   );
 });
 
-// Notify clients when a new SW is waiting
+// User klik Update → skip waiting → activate
 self.addEventListener("message", e => {
   if (e.data === "SKIP_WAITING") self.skipWaiting();
 });

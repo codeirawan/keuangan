@@ -264,24 +264,30 @@ export default function App() {
   // SW update detection
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.ready.then(reg => {
+    const checkWaiting = reg => {
+      if (reg.waiting && navigator.serviceWorker.controller) { setSwUpdate(true); return; }
       reg.addEventListener("updatefound", () => {
         const nw = reg.installing;
         nw.addEventListener("statechange", () => {
           if (nw.state === "installed" && navigator.serviceWorker.controller) setSwUpdate(true);
         });
       });
-    });
+    };
+    navigator.serviceWorker.getRegistration().then(reg => { if (reg) checkWaiting(reg); });
+    // Reload saat SW baru aktif
+    navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload());
   }, []);
 
   // Pull-to-refresh
   const doRefresh = useCallback(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready.then(reg => {
-        reg.waiting?.postMessage("SKIP_WAITING");
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg?.waiting) reg.waiting.postMessage("SKIP_WAITING");
+        else window.location.reload();
       });
+    } else {
+      window.location.reload();
     }
-    window.location.reload();
   }, []);
 
   useEffect(() => {
