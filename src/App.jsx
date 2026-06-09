@@ -415,18 +415,20 @@ export default function App() {
               {/* ── Period Summary ── */}
               <div className="card-solid" style={{ padding:"20px" }}>
                 {/* Header row */}
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-                  <div className="period-nav">
-                    <button onClick={() => setSumOffset(o => o-1)}>‹</button>
-                    <span style={{ fontSize:13, fontWeight:700, color:C.text, minWidth:160, textAlign:"center" }}>{period.label}</span>
-                    <button onClick={() => setSumOffset(o => o+1)} disabled={sumOffset >= 0} style={{ opacity: sumOffset >= 0 ? .35 : 1, cursor: sumOffset >= 0 ? "default" : "pointer" }}>›</button>
-                  </div>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                  <span style={{ fontSize:11, fontWeight:700, letterSpacing:1, color:C.muted, textTransform:"uppercase" }}>Ringkasan</span>
                   {/* Mode toggle */}
                   <div style={{ display:"flex", background:dm?"rgba(255,255,255,.06)":"rgba(0,0,0,.05)", borderRadius:8, padding:3, gap:2 }}>
                     {[["week","Minggu"],["month","Bulan"]].map(([m,l]) => (
                       <button key={m} onClick={() => { setSumMode(m); setSumOffset(0); }} style={{ padding:"4px 10px", borderRadius:6, border:"none", fontSize:11, fontWeight:700, background: sumMode===m ? (dm?"rgba(255,255,255,.12)":"#fff") : "transparent", color: sumMode===m ? C.text : C.dim, boxShadow: sumMode===m ? "0 1px 4px rgba(0,0,0,.15)" : "none" }}>{l}</button>
                     ))}
                   </div>
+                </div>
+                {/* Period nav row */}
+                <div className="period-nav" style={{ justifyContent:"center", marginBottom:16 }}>
+                  <button onClick={() => setSumOffset(o => o-1)}>‹</button>
+                  <span style={{ fontSize:13, fontWeight:700, color:C.text, minWidth:140, textAlign:"center" }}>{period.label}</span>
+                  <button onClick={() => setSumOffset(o => o+1)} disabled={sumOffset >= 0} style={{ opacity: sumOffset >= 0 ? .35 : 1, cursor: sumOffset >= 0 ? "default" : "pointer" }}>›</button>
                 </div>
 
                 {/* Stats row */}
@@ -694,7 +696,7 @@ export default function App() {
                 <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>
               </svg><span>Ringkasan</span>
           </button>
-          <button className={`fab${tab==="add"?" active-tab":""}`} onClick={() => setTab("add")}>
+          <button className={`fab${tab==="add"?" active-tab":""}`} onClick={() => setTab(tab === "add" ? "dashboard" : "add")}>
             <span style={{ fontSize:tab==="add"?20:28, transition:"font-size .2s" }}>{tab==="add"?"✕":"+"}</span>
           </button>
           <button className="nav-item" onClick={() => setTab("history")} style={{ color:tab==="history"?accent:C.dim }}>
