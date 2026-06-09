@@ -206,7 +206,8 @@ export default function App() {
   const [cloudReady, setCloudReady]           = useState(false);
   const [dark, setDark, darkReady]            = useStorage("keuangan-dark-v1", true);
 
-  const [budgets, setBudgets, ]               = useStorage("keuangan-budgets-v1", {});
+  const [localBudgets, setLocalBudgets, ]     = useStorage("keuangan-budgets-v1", {});
+  const [cloudBudgets, setCloudBudgets]       = useState({});
 
   const [tab, setTab]         = useState("dashboard");
   const [filterType, setFT]   = useState("all");
@@ -248,8 +249,27 @@ export default function App() {
     return unsub;
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    const unsub = onSnapshot(doc(db, "users", user.uid, "meta", "budgets"), snap => {
+      if (snap.exists()) setCloudBudgets(snap.data());
+    });
+    return unsub;
+  }, [user]);
+
   const txns      = user ? cloudTxns : localTxns;
   const txnsReady = user ? cloudReady : localReady;
+  const budgets   = user ? cloudBudgets : localBudgets;
+
+  async function setBudgets(updater) {
+    const next = typeof updater === "function" ? updater(budgets) : updater;
+    if (user) {
+      await setDoc(doc(db, "users", user.uid, "meta", "budgets"), next);
+    } else {
+      setLocalBudgets(next);
+    }
+  }
+
   const dm        = dark;
   const ready     = darkReady && txnsReady && !authLoading;
 
