@@ -3,12 +3,12 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyCtk2xdAX5W98pGAgHnZ12d2ZdVEHQZUAQ",
-  authDomain:        "sisauang.firebaseapp.com",
-  projectId:         "sisauang",
-  storageBucket:     "sisauang.firebasestorage.app",
-  messagingSenderId: "371688435932",
-  appId:             "1:371688435932:web:fed6bc5b0d7353d4f7c419",
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
