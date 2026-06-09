@@ -26,7 +26,7 @@
     "vite": "^8.0.12"
   },
   "allowScripts": {
-    "@firebase/util": "true",
-    "protobufjs": "true"
+    "@firebase/util": true,
+    "protobufjs": true
   }
 }
