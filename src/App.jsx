@@ -627,6 +627,7 @@ export default function App() {
         .success-toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
           background:linear-gradient(135deg,#059669,#34D399); color:#fff;
           padding:12px 24px; border-radius:50px; font-size:13px; font-weight:600; z-index:999;
+          white-space:nowrap; width:max-content; max-width:90vw;
           box-shadow:0 8px 24px rgba(5,150,105,.4); animation:toastIn .3s cubic-bezier(.34,1.56,.64,1); }
         @keyframes toastIn { from{opacity:0;transform:translate(-50%,-60%)} to{opacity:1;transform:translate(-50%,-50%)} }
 
@@ -669,7 +670,7 @@ export default function App() {
 
       {/* SW update banner */}
       {swUpdate && (
-        <div style={{ position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)", zIndex:300, background:"#7C3AED", color:"#fff", borderRadius:14, padding:"10px 18px", display:"flex", alignItems:"center", gap:12, boxShadow:"0 4px 20px rgba(124,58,237,.5)", fontSize:13, fontWeight:600, whiteSpace:"nowrap" }}>
+        <div style={{ position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)", zIndex:300, background:"#7C3AED", color:"#fff", borderRadius:14, padding:"10px 18px", display:"flex", alignItems:"center", gap:12, boxShadow:"0 4px 20px rgba(124,58,237,.5)", fontSize:13, fontWeight:600, whiteSpace:"nowrap", width:"max-content" }}>
           <span>Versi baru tersedia</span>
           <button onClick={doRefresh} style={{ background:"rgba(255,255,255,.2)", border:"none", color:"#fff", borderRadius:8, padding:"4px 12px", fontSize:12, fontWeight:700 }}>Update</button>
         </div>
