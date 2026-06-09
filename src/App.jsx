@@ -243,7 +243,7 @@ export default function App() {
   const txns      = user ? cloudTxns : localTxns;
   const txnsReady = user ? cloudReady : localReady;
   const dm        = dark;
-  const ready     = darkReady && txnsReady;
+  const ready     = darkReady && txnsReady && !authLoading;
 
   const totalIncome  = txns.filter(t => t.type==="income").reduce((s,t) => s+t.amount, 0);
   const totalExpense = txns.filter(t => t.type==="expense").reduce((s,t) => s+t.amount, 0);
