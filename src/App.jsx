@@ -395,6 +395,10 @@ export default function App() {
     if (!n || n <= 0)        { setFormErr("Nominal tidak valid"); return; }
     if (n > 999_999_999_999) { setFormErr("Nominal maksimal Rp 999.999.999.999"); return; }
     if (!desc.trim())        { setFormErr("Keterangan wajib diisi"); return; }
+    if (!editingId) {
+      const todayCount = txns.filter(t => t.date === date).length;
+      if (todayCount >= 50) { setFormErr("Maksimal 50 transaksi per hari"); return; }
+    }
     setFormErr("");
     const txn = { id: editingId || Date.now(), type, catId, desc: desc.trim(), amount: n, date };
     if (user) {
